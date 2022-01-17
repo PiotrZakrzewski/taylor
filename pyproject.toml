@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "taylor"
+version = "0.1.0"
+description = "Pseudo simulation to explain why your tickets drag on"
+authors = ["Piotr Zakrzewski <1050269+PiotrZakrzewski@users.noreply.github.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+streamlit = "^1.4.0"
+watchdog = "^2.1.6"
+
+[tool.poetry.dev-dependencies]
+black = "^21.12b0"
+pylint = "^2.12.2"
+isort = "^5.10.1"
+pre-commit = "^2.16.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
