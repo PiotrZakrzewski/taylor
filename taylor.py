@@ -71,8 +71,9 @@ def sick(contr: Contributor) -> bool:
     return random.randint(1, 100) <= sickness
 
 def on_holidays(contr: Contributor) -> bool:
-    chance_wants_off = (contr.worked_days - 100)/100
-    return random.randint(1, 100) <= chance_wants_off
+    if contr.used_pto >= holidays:
+        return False
+    return random.randint(1, 100) <= contr.worked_days
 
 def on_emergency(contr: Contributor) -> bool:
     return random.randint(1, 100) <= emergencies
@@ -93,6 +94,7 @@ def is_helping_recruit(contr) -> bool:
 
 def is_productive(contr: Contributor, onbording_needed:bool, recruitment_in_progress:bool) -> bool:
     if contr.not_filled:
+        contr.days_notfilled += 1
         return False
     if not contr.onboarded:
         contr.days_onboarding += 1
@@ -145,6 +147,7 @@ while (worked_days < total_mandays_estimate) or not well_defined:
             dev.days_till_replacement -= 1
         if not dev.not_filled and last_day(dev):
             dev.days_till_replacement = replacement
+            dev.not_filled = True
     lead_days += 1
 late_by = lead_days - leadtime_estimate
 late_perc = round((late_by / leadtime_estimate)* 100)
