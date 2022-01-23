@@ -39,8 +39,8 @@ st.header("Availability stats")
 # st.subheader('Spillover - % spent on previous unfinished work')
 # spillover = st.slider('spillover', 0, 100, 25)
 
-# st.subheader('Chance given day will be spent fighting fires')
-# emergencies = st.slider('emergencies', 0, 100, 25)
+st.subheader('Chance given day will be spent fighting fires')
+emergencies = st.slider('emergencies', 0, 100, 25)
 
 # st.subheader('Dev turnover rate')
 # turnover = st.slider('turnover', 0, 100, 33)
@@ -67,12 +67,17 @@ def on_holidays(contr: Contributor) -> bool:
     chance_wants_off = (contr.worked_days - 100)/100
     return random.randint(1, 100) <= chance_wants_off
 
+def on_emergency(contr: Contributor) -> bool:
+    return random.randint(1, 100) <= emergencies
+
 def is_productive(contr: Contributor) -> bool:
     if sick(contr):
         contr.sick_days += 1
         return False
     if on_holidays(contr):
         contr.used_pto += 1
+        return False
+    if on_emergency(contr):
         return False
     contr.worked_days += 1
     return True
@@ -86,8 +91,8 @@ while worked_days < estimate:
             worked_days += 1
     lead_days += 1
 late_by = lead_days - estimate
-late_perc = (late_by / estimate)* 100
-st.write(f"Late by {late_by} or {late_perc}% over the budget")
+late_perc = round((late_by / estimate)* 100)
+st.write(f"Late by {late_by} days or {late_perc}% over the budget")
 st.write(f"Lead days {lead_days}")
 st.write(f"Worked days {worked_days}")
 total_sick = sum([c.sick_days for c in _devs])
