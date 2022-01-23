@@ -36,7 +36,7 @@ total_mandays_estimate = leadtime_estimate * devs
 #         st.subheader('How many dedicated QA?')
 #         devops = st.slider('QAs', 0, 10, 1)
 
-st.header("Availability stats (either % of the year or in days)")
+st.header("Availability stats for the team")
 # st.subheader('Spillover - % spent on previous unfinished work')
 # spillover = st.slider('spillover', 0, 100, 25)
 emergencies = st.slider('% time spent on emergencies', 0, 100, 25)
@@ -46,9 +46,8 @@ onboarding = st.slider('time it takes new hire to become productive', 0, 100, 5)
 holidays = st.slider('number of holidays in a year (PTO)', 0, 40, 25)
 sickness = st.slider('sickness %', 0, 100, 3)
 meetings = st.slider('meetings %', 0, 100, 10)
-st.subheader("Below availability modifiers are active only when there are unfilled positions or devs being onboarded")
-helps_onbording = st.slider('Time spent helping onboarded devs', 0, 100, 10)
-helps_recruiting = st.slider('Time spent participating in interviews', 0, 100, 2)
+helps_onbording = st.slider('% Time spent helping onboarded devs (when there are new devs)', 0, 100, 10)
+helps_recruiting = st.slider('% Time spent participating in interviews (when looking for new devs)', 0, 100, 2)
 
 # st.subheader('Multitasking - how many different projects run at the same time')
 # multitasking = st.slider('multitasking', 0, 10, 3)
@@ -72,6 +71,7 @@ class Contributor:
 
     def report(self) -> dict:
         return {
+            "Role": self.name,
             "Productive": self.worked_days,
             "Firefighting": self.days_firefighting,
             "Sick": self.sick_days,
@@ -159,7 +159,8 @@ late_by = lead_days - leadtime_estimate
 late_perc = round((late_by / leadtime_estimate)* 100)
 col1, col2, col3 = st.columns(3)
 col1.metric(label="Lead time", value=f"{lead_days} days", delta=f"{late_by} days", delta_color="inverse")
-col2.metric(label="Total Mandays worked", value=worked_days)
+waste = (lead_days * devs) -(leadtime_estimate * devs)
+col2.metric(label="Waste", value=f"{waste} days")
 report = [d.report() for d in _devs]
 report = pd.DataFrame(report)
 st.dataframe(report)
