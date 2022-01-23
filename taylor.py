@@ -21,9 +21,7 @@ if not well_defined:
         checkin_moment = st.slider("What % of the project must be complete before you can verify if it is the right thing to build?", 1, 99, 80)
 
 st.header("Availability stats for the team")
-st.write("Spillover means unfinished work from the previous project that still needs to be done")
-st.subheader('Spillover - % time spent on previous unfinished work')
-spillover = st.slider('spillover', 0, 100, 50)
+spillover = st.slider('spillover % time spent on previous unfinished work', 0, 100, 50)
 emergencies = st.slider('% time spent on emergencies', 0, 100, 25)
 turnover = st.slider('turnover per year (% quitting per year)', 0, 100, 33)
 replacement = st.slider('time (days) till new hire starts', 0, 300, 60)
