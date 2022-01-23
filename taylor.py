@@ -2,6 +2,8 @@ import streamlit as st
 import random
 from dataclasses import dataclass
 
+WORKABLE_DAYS = 220
+
 st.title('Why your project drags on so long..')
 
 st.header("First about your task")
@@ -14,7 +16,7 @@ st.header("First about your task")
 # well_defined = st.checkbox('Is really well defined and well understood')
 
 st.subheader('What is the initial time estimate you extracted from devs?')
-estimate = st.slider('estimate in working days', 1, 100, 1)
+estimate = st.slider('estimate in working days', 1, 100, 10)
 
 
 st.header("Then about your dev team")
@@ -42,8 +44,14 @@ st.header("Availability stats")
 st.subheader('Chance given day will be spent fighting fires')
 emergencies = st.slider('emergencies', 0, 100, 25)
 
-# st.subheader('Dev turnover rate')
-# turnover = st.slider('turnover', 0, 100, 33)
+st.subheader('Dev turnover rate')
+turnover = st.slider('turnover', 0, 100, 33)
+
+st.subheader('Days till replacement')
+replacement = st.slider('replacement', 0, 300, 60)
+
+st.subheader('Onboarding length')
+onboarding = st.slider('onboarding', 0, 100, 5)
 
 st.subheader('Holidays per year')
 holidays = st.slider('holidays', 0, 40, 25)
@@ -51,14 +59,21 @@ holidays = st.slider('holidays', 0, 40, 25)
 st.subheader('sickness chance per day')
 sickness = st.slider('sickness %', 0, 100, 3)
 
+st.subheader('time spent on (non-project) meetings')
+meetings = st.slider('meetings %', 0, 100, 10)
+
 # st.subheader('Multitasking - how many different projects run at the same time')
 # multitasking = st.slider('multitasking', 0, 10, 3)
 @dataclass
 class Contributor:
     name: str
-    used_pto: int
-    sick_days: int
-    worked_days: int
+    used_pto: int = 0
+    sick_days: int = 0
+    worked_days: int = 0
+    not_filled: bool = False
+    onboarded: bool = True
+    days_till_replacement:int = 0
+    days_till_productive: int = 0
     
 def sick(contr: Contributor) -> bool:
     return random.randint(1, 100) <= sickness
@@ -70,7 +85,19 @@ def on_holidays(contr: Contributor) -> bool:
 def on_emergency(contr: Contributor) -> bool:
     return random.randint(1, 100) <= emergencies
 
+def last_day(contr: Contributor) -> bool:
+    daily_chance = turnover / WORKABLE_DAYS
+    fractionized_roll = (random.randint(1, 10000) / 100)
+    return  fractionized_roll <= daily_chance
+
+def in_meeting(contr: Contributor) -> bool:
+    return random.randint(1, 100) <= meetings
+
 def is_productive(contr: Contributor) -> bool:
+    if contr.not_filled:
+        return False
+    if not contr.onboarded:
+        False
     if sick(contr):
         contr.sick_days += 1
         return False
@@ -79,16 +106,29 @@ def is_productive(contr: Contributor) -> bool:
         return False
     if on_emergency(contr):
         return False
+    if in_meeting(contr):
+        return False
     contr.worked_days += 1
     return True
 
 worked_days = 0
 lead_days = 0
-_devs = [Contributor("dev", 0, 0, 0) for _ in range(devs)]
+_devs = [Contributor("dev") for _ in range(devs)]
 while worked_days < estimate:
     for dev in _devs:
         if is_productive(dev):
             worked_days += 1
+        if not dev.onboarded and dev.days_till_productive < 1:
+            dev.onboarded = True
+        if not dev.onboarded:
+            dev.days_till_productive -= 1
+        if dev.not_filled and dev.days_till_replacement < 1:
+            dev.not_filled = False
+            dev.days_till_productive = onboarding
+        if dev.not_filled:
+            dev.days_till_replacement -= 1
+        if not dev.not_filled and last_day(dev):
+            dev.days_till_replacement = replacement
     lead_days += 1
 late_by = lead_days - estimate
 late_perc = round((late_by / estimate)* 100)
