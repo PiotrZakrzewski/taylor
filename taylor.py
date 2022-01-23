@@ -64,7 +64,7 @@ class Contributor:
             "Onboarding": self.days_onboarding,
             "Recruiting": self.days_recruiting,
             "Meetings": self.days_meetings,
-            "Not Filled": self.days_notfilled,
+            "Absent (Role Not Filled)": self.days_notfilled,
             "Waiting": self.days_waiting,
         }
     
