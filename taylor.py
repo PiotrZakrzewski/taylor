@@ -12,33 +12,12 @@ devs = st.slider('How many devs work on it?', 1, 10, 2)
 st.header("Then about your task")
 leadtime_estimate = st.slider('What is the initial time estimate (lead time in working days) you extracted from devs?', 1, 100, 10)
 total_mandays_estimate = leadtime_estimate * devs
-# fe_work = st.checkbox('Involves front-end work')
-# be_work = st.checkbox('Involves back-end work')
-# devops_work = st.checkbox('Involves devops work')
-# manual_qa_work = st.checkbox('Involves manual QA')
-# auto_qa_work = st.checkbox('Involves new QA automation')
-# external_stakeholder = st.checkbox('Involves an external stakeholder\'s review')
 well_defined = st.checkbox('The task is really well defined and understood')
 if not well_defined:
     checkin_moment = 100
     last_moment_change = st.checkbox("Only at the end of the project we will know if it is the right thing to build", value=True)
     if not last_moment_change:
         checkin_moment = st.slider("What % of the project must be complete before you can verify if it is the right thing to build?", 1, 99, 80)
-
-# if st.checkbox('Multifunctional team (anyone can pickup any ticket)'):
-# else:
-#     if be_work:
-#         st.subheader('How many back-end developers?')
-#         be = st.slider('Back-end', 0, 10, 1)
-#     if fe_work:
-#         st.subheader('How many front-end developers?')
-#         fe = st.slider('Front-end', 0, 10, 1)
-#     if devops_work:
-#         st.subheader('How many dedicated devops?')
-#         devops = st.slider('devops', 0, 10, 1)
-#     if manual_qa_work or auto_qa_work:
-#         st.subheader('How many dedicated QA?')
-#         devops = st.slider('QAs', 0, 10, 1)
 
 st.header("Availability stats for the team")
 # st.subheader('Spillover - % spent on previous unfinished work')
@@ -48,7 +27,7 @@ turnover = st.slider('turnover per year (% quitting per year)', 0, 100, 33)
 replacement = st.slider('time till new hire starts', 0, 300, 60)
 onboarding = st.slider('time it takes new hire to become productive', 0, 100, 5)
 holidays = st.slider('number of holidays in a year (PTO)', 0, 40, 25)
-sickness = st.slider('sickness %', 0, 100, 3)
+sickness = st.slider('sickness %', 0, 100, 1)
 meetings = st.slider('meetings %', 0, 100, 10)
 helps_onbording = st.slider('% Time spent helping onboarded devs (when there are new devs)', 0, 100, 10)
 helps_recruiting = st.slider('% Time spent participating in interviews (when looking for new devs)', 0, 100, 2)
