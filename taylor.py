@@ -10,9 +10,9 @@ st.title('Why your project drags on so long..')
 st.header("First about your dev team")
 devs = st.slider('How many devs work on it?', 1, 10, 2)
 st.header("Then about your task")
-st.write("HINT: the estimate does not adjust automatically when you change the team")
-leadtime_estimate = st.slider('What is the initial time estimate (lead time in working days) you extracted from devs?', 1, 100, 10)
-total_mandays_estimate = leadtime_estimate * devs
+
+total_mandays_estimate = st.slider('What is the initial time estimate (total man-work-days) you extracted from devs?', 1, 100, 10)
+leadtime_estimate = total_mandays_estimate / devs
 well_defined = st.checkbox('The task is really well defined and understood')
 if not well_defined:
     checkin_moment = 100
@@ -21,8 +21,8 @@ if not well_defined:
         checkin_moment = st.slider("What % of the project must be complete before you can verify if it is the right thing to build?", 1, 99, 80)
 
 st.header("Availability stats for the team")
-# st.subheader('Spillover - % spent on previous unfinished work')
-# spillover = st.slider('spillover', 0, 100, 25)
+st.subheader('Spillover - % time spent on previous unfinished work')
+spillover = st.slider('spillover', 0, 100, 50)
 emergencies = st.slider('% time spent on emergencies', 0, 100, 25)
 turnover = st.slider('turnover per year (% quitting per year)', 0, 100, 33)
 replacement = st.slider('time till new hire starts', 0, 300, 60)
@@ -44,6 +44,7 @@ class Contributor:
     days_till_productive: int = 0
 
     worked_days: int = 0
+    other_work: int = 0
     sick_days: int = 0
     used_pto: int = 0
     days_recruiting: int = 0
@@ -57,6 +58,7 @@ class Contributor:
         return {
             "Role": self.name,
             "Productive": self.worked_days,
+            "Other work": self.other_work,
             "Firefighting": self.days_firefighting,
             "Sick": self.sick_days,
             "PTO": self.used_pto,
@@ -92,6 +94,9 @@ def is_helping_onboard(contr) -> bool:
 def is_helping_recruit(contr) -> bool:
     return random.randint(1, 100) <= helps_recruiting
 
+def busy_prev_work(contr) ->bool:
+    return random.randint(1, 100) <= spillover
+
 def is_productive(contr: Contributor, onbording_needed:bool, recruitment_in_progress:bool) -> bool:
     if contr.not_filled:
         contr.days_notfilled += 1
@@ -116,6 +121,9 @@ def is_productive(contr: Contributor, onbording_needed:bool, recruitment_in_prog
         return False
     if recruitment_in_progress and is_helping_recruit(contr):
         contr.days_recruiting += 1
+        return False
+    if busy_prev_work(contr):
+        contr.other_work += 1
         return False
     contr.worked_days += 1
     return True
@@ -149,8 +157,7 @@ while (worked_days < total_mandays_estimate) or not well_defined:
             dev.days_till_replacement = replacement
             dev.not_filled = True
     lead_days += 1
-late_by = lead_days - leadtime_estimate
-late_perc = round((late_by / leadtime_estimate)* 100)
+late_by = round(lead_days - leadtime_estimate, 1)
 col1, col2, col3 = st.columns(3)
 col1.metric(label="Lead time", value=f"{lead_days} days", delta=f"{late_by} days", delta_color="inverse")
 waste = (lead_days * devs) -(leadtime_estimate * devs)
