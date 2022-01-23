@@ -1,6 +1,7 @@
 import streamlit as st
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+import pandas as pd
 
 WORKABLE_DAYS = 220
 
@@ -46,8 +47,8 @@ holidays = st.slider('number of holidays in a year (PTO)', 0, 40, 25)
 sickness = st.slider('sickness %', 0, 100, 3)
 meetings = st.slider('meetings %', 0, 100, 10)
 st.subheader("Below availability modifiers are active only when there are unfilled positions or devs being onboarded")
-helps_onbording = st.slider('Time spent helping onboarded devs', 0, 100, 1)
-helps_recruiting = st.slider('Time spent participating in interviews', 0, 100, 1)
+helps_onbording = st.slider('Time spent helping onboarded devs', 0, 100, 10)
+helps_recruiting = st.slider('Time spent participating in interviews', 0, 100, 2)
 
 # st.subheader('Multitasking - how many different projects run at the same time')
 # multitasking = st.slider('multitasking', 0, 10, 3)
@@ -67,6 +68,20 @@ class Contributor:
     days_firefighting: int = 0
     days_notfilled:int = 0 
     days_meetings:int = 0
+    days_waiting:int = 0
+
+    def report(self) -> dict:
+        return {
+            "Productive": self.worked_days,
+            "Firefighting": self.days_firefighting,
+            "Sick": self.sick_days,
+            "PTO": self.used_pto,
+            "Onboarding": self.days_onboarding,
+            "Recruiting": self.days_recruiting,
+            "Meetings": self.days_meetings,
+            "Not Filled": self.days_notfilled,
+            "Waiting": self.days_waiting,
+        }
     
 def sick(contr: Contributor) -> bool:
     return random.randint(1, 100) <= sickness
@@ -142,10 +157,9 @@ while worked_days < total_mandays_estimate:
     lead_days += 1
 late_by = lead_days - leadtime_estimate
 late_perc = round((late_by / leadtime_estimate)* 100)
-st.write(f"Late by {late_by} days or {late_perc}% over the budget")
-st.write(f"Lead days {lead_days}")
-st.write(f"Worked days {worked_days}")
-total_sick = sum([c.sick_days for c in _devs])
-total_holidays = sum([c.used_pto for c in _devs])
-st.write(f"sick days {total_sick}")
-st.write(f"holidays days {total_holidays}")
+col1, col2, col3 = st.columns(3)
+col1.metric(label="Lead time", value=f"{lead_days} days", delta=f"{late_by} days", delta_color="inverse")
+col2.metric(label="Total Mandays worked", value=worked_days)
+report = [d.report() for d in _devs]
+report = pd.DataFrame(report)
+st.dataframe(report)
