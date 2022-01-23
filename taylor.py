@@ -1,6 +1,6 @@
 import streamlit as st
 import random
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 import pandas as pd
 
 WORKABLE_DAYS = 220
@@ -18,8 +18,12 @@ total_mandays_estimate = leadtime_estimate * devs
 # manual_qa_work = st.checkbox('Involves manual QA')
 # auto_qa_work = st.checkbox('Involves new QA automation')
 # external_stakeholder = st.checkbox('Involves an external stakeholder\'s review')
-# well_defined = st.checkbox('Is really well defined and well understood')
-
+well_defined = st.checkbox('The task is really well defined and understood')
+if not well_defined:
+    checkin_moment = 100
+    last_moment_change = st.checkbox("Only at the end of the project we will know if it is the right thing to build", value=True)
+    if not last_moment_change:
+        checkin_moment = st.slider("What % of the project must be complete before you can verify if it is the right thing to build?", 1, 99, 80)
 
 # if st.checkbox('Multifunctional team (anyone can pickup any ticket)'):
 # else:
@@ -137,7 +141,14 @@ def is_productive(contr: Contributor, onbording_needed:bool, recruitment_in_prog
 worked_days = 0
 lead_days = 0
 _devs = [Contributor("dev") for _ in range(devs)]
-while worked_days < total_mandays_estimate:
+perc_complete = 0
+scope_change_waste = 0
+while (worked_days < total_mandays_estimate) or not well_defined:
+    perc_complete = (worked_days / total_mandays_estimate) * 100
+    if not well_defined and perc_complete > checkin_moment:
+        well_defined = True
+        scope_change_waste = worked_days
+        worked_days = 0
     recruiting_in_progress = any([dev.not_filled for dev in _devs])
     onboarding_in_progress = any([not dev.onboarded for dev in _devs])
     for dev in _devs:
@@ -161,6 +172,7 @@ col1, col2, col3 = st.columns(3)
 col1.metric(label="Lead time", value=f"{lead_days} days", delta=f"{late_by} days", delta_color="inverse")
 waste = (lead_days * devs) -(leadtime_estimate * devs)
 col2.metric(label="Waste", value=f"{waste} days")
+col3.metric(label="Scope Change Waste", value=f"{scope_change_waste} days")
 report = [d.report() for d in _devs]
 report = pd.DataFrame(report)
 st.dataframe(report)
