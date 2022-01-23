@@ -10,6 +10,7 @@ st.title('Why your project drags on so long..')
 st.header("First about your dev team")
 devs = st.slider('How many devs work on it?', 1, 10, 2)
 st.header("Then about your task")
+st.write("HINT: the estimate does not adjust automatically when you change the team")
 leadtime_estimate = st.slider('What is the initial time estimate (lead time in working days) you extracted from devs?', 1, 100, 10)
 total_mandays_estimate = leadtime_estimate * devs
 well_defined = st.checkbox('The task is really well defined and understood')
