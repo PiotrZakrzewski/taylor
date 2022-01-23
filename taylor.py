@@ -6,7 +6,11 @@ WORKABLE_DAYS = 220
 
 st.title('Why your project drags on so long..')
 
-st.header("First about your task")
+st.header("First about your dev team")
+devs = st.slider('How many devs work on it?', 1, 10, 2)
+st.header("Then about your task")
+leadtime_estimate = st.slider('What is the initial time estimate (lead time in working days) you extracted from devs?', 1, 100, 10)
+total_mandays_estimate = leadtime_estimate * devs
 # fe_work = st.checkbox('Involves front-end work')
 # be_work = st.checkbox('Involves back-end work')
 # devops_work = st.checkbox('Involves devops work')
@@ -15,14 +19,8 @@ st.header("First about your task")
 # external_stakeholder = st.checkbox('Involves an external stakeholder\'s review')
 # well_defined = st.checkbox('Is really well defined and well understood')
 
-st.subheader('What is the initial time estimate you extracted from devs?')
-estimate = st.slider('estimate in working days', 1, 100, 10)
-
-
-st.header("Then about your dev team")
 
 # if st.checkbox('Multifunctional team (anyone can pickup any ticket)'):
-devs = st.slider('devs', 1, 10, 1)
 # else:
 #     if be_work:
 #         st.subheader('How many back-end developers?')
@@ -37,43 +35,38 @@ devs = st.slider('devs', 1, 10, 1)
 #         st.subheader('How many dedicated QA?')
 #         devops = st.slider('QAs', 0, 10, 1)
 
-st.header("Availability stats")
+st.header("Availability stats (either % of the year or in days)")
 # st.subheader('Spillover - % spent on previous unfinished work')
 # spillover = st.slider('spillover', 0, 100, 25)
-
-st.subheader('Chance given day will be spent fighting fires')
-emergencies = st.slider('emergencies', 0, 100, 25)
-
-st.subheader('Dev turnover rate')
-turnover = st.slider('turnover', 0, 100, 33)
-
-st.subheader('Days till replacement')
-replacement = st.slider('replacement', 0, 300, 60)
-
-st.subheader('Onboarding length')
-onboarding = st.slider('onboarding', 0, 100, 5)
-
-st.subheader('Holidays per year')
-holidays = st.slider('holidays', 0, 40, 25)
-
-st.subheader('sickness chance per day')
+emergencies = st.slider('% time spent on emergencies', 0, 100, 25)
+turnover = st.slider('turnover per year (% quitting per year)', 0, 100, 33)
+replacement = st.slider('time till new hire starts', 0, 300, 60)
+onboarding = st.slider('time it takes new hire to become productive', 0, 100, 5)
+holidays = st.slider('number of holidays in a year (PTO)', 0, 40, 25)
 sickness = st.slider('sickness %', 0, 100, 3)
-
-st.subheader('time spent on (non-project) meetings')
 meetings = st.slider('meetings %', 0, 100, 10)
+st.subheader("Below availability modifiers are active only when there are unfilled positions or devs being onboarded")
+helps_onbording = st.slider('Time spent helping onboarded devs', 0, 100, 1)
+helps_recruiting = st.slider('Time spent participating in interviews', 0, 100, 1)
 
 # st.subheader('Multitasking - how many different projects run at the same time')
 # multitasking = st.slider('multitasking', 0, 10, 3)
 @dataclass
 class Contributor:
     name: str
-    used_pto: int = 0
-    sick_days: int = 0
-    worked_days: int = 0
     not_filled: bool = False
     onboarded: bool = True
     days_till_replacement:int = 0
     days_till_productive: int = 0
+
+    worked_days: int = 0
+    sick_days: int = 0
+    used_pto: int = 0
+    days_recruiting: int = 0
+    days_onboarding: int = 0
+    days_firefighting: int = 0
+    days_notfilled:int = 0 
+    days_meetings:int = 0
     
 def sick(contr: Contributor) -> bool:
     return random.randint(1, 100) <= sickness
@@ -93,10 +86,17 @@ def last_day(contr: Contributor) -> bool:
 def in_meeting(contr: Contributor) -> bool:
     return random.randint(1, 100) <= meetings
 
-def is_productive(contr: Contributor) -> bool:
+def is_helping_onboard(contr) -> bool:
+    return random.randint(1, 100) <= helps_onbording
+
+def is_helping_recruit(contr) -> bool:
+    return random.randint(1, 100) <= helps_recruiting
+
+def is_productive(contr: Contributor, onbording_needed:bool, recruitment_in_progress:bool) -> bool:
     if contr.not_filled:
         return False
     if not contr.onboarded:
+        contr.days_onboarding += 1
         False
     if sick(contr):
         contr.sick_days += 1
@@ -105,8 +105,16 @@ def is_productive(contr: Contributor) -> bool:
         contr.used_pto += 1
         return False
     if on_emergency(contr):
+        contr.days_firefighting += 1
         return False
     if in_meeting(contr):
+        contr.days_meetings += 1
+        return False
+    if onbording_needed and is_helping_onboard(contr):
+        contr.days_onboarding += 1
+        return False
+    if recruitment_in_progress and is_helping_recruit(contr):
+        contr.days_recruiting += 1
         return False
     contr.worked_days += 1
     return True
@@ -114,9 +122,11 @@ def is_productive(contr: Contributor) -> bool:
 worked_days = 0
 lead_days = 0
 _devs = [Contributor("dev") for _ in range(devs)]
-while worked_days < estimate:
+while worked_days < total_mandays_estimate:
+    recruiting_in_progress = any([dev.not_filled for dev in _devs])
+    onboarding_in_progress = any([not dev.onboarded for dev in _devs])
     for dev in _devs:
-        if is_productive(dev):
+        if is_productive(dev, onboarding_in_progress, recruiting_in_progress):
             worked_days += 1
         if not dev.onboarded and dev.days_till_productive < 1:
             dev.onboarded = True
@@ -130,8 +140,8 @@ while worked_days < estimate:
         if not dev.not_filled and last_day(dev):
             dev.days_till_replacement = replacement
     lead_days += 1
-late_by = lead_days - estimate
-late_perc = round((late_by / estimate)* 100)
+late_by = lead_days - leadtime_estimate
+late_perc = round((late_by / leadtime_estimate)* 100)
 st.write(f"Late by {late_by} days or {late_perc}% over the budget")
 st.write(f"Lead days {lead_days}")
 st.write(f"Worked days {worked_days}")
