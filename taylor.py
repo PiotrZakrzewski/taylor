@@ -6,13 +6,41 @@ import pandas as pd
 WORKABLE_DAYS = 220
 
 st.title('Why your project drags on so long..')
-
+st.markdown("""
+# Simple Delay Calculator
+This calculator conducts a simple simulation based on parameters you provide.
+It may have too many assumptions, simplifications and omissions to be accurate 
+but it can help you gain awareness of some forces that conspire against
+your roadmap which people often claim they know about, but forget
+when giving lead time estimates for their planned projects.
+""")
 st.header("First about your dev team")
+st.markdown("""
+- Devs are perfectly fungible (anyone can pick any task, no specialization)
+- no difference in performance
+""")
 devs = st.slider('How many devs work on it?', 1, 10, 2)
 st.header("Then about your task")
+st.markdown("""
+**Bufferless and Accurate Estimate**
 
+The estimate you give here is assumed to be perfect - it will really take as long
+in this simulation to complete the project. This simulation is mostly about all
+factors other than just wrong estimates that contribute to delays.
+""")
 total_mandays_estimate = st.slider('What is the initial time estimate (total man-work-days) you extracted from devs?', 1, 100, 10)
 leadtime_estimate = total_mandays_estimate / devs
+st.markdown("""
+**Is The Task Really Well Defined?**
+
+Some tasks, like fixing a bug or completing a routine process require no iteration
+and are not subject to uncertainty. Software development however, is famous for vague and shifting
+requirements, or misunderstanding thereof. If you select that the task is well defined,
+the team will finish the task after they rack up enough productive days (your estimate from above).
+If the task is not well defined, you will need to specify when is the check-in point, imagine
+for instance a demo to the stakeholder or end-to-end tests, this is the point when
+the progress is reset to zero to simulate how the **real** requirements were discovered.
+""")
 well_defined = st.checkbox('The task is really well defined and understood')
 if not well_defined:
     checkin_moment = 100
@@ -21,15 +49,25 @@ if not well_defined:
         checkin_moment = st.slider("What % of the project must be complete before you can verify if it is the right thing to build?", 1, 99, 80)
 
 st.header("Availability stats for the team")
+st.write("Spillover means that your devs are still preoccupied with lefotvers from the previous project")
 spillover = st.slider('spillover % time spent on previous unfinished work', 0, 100, 50)
+st.write("Is your project team in any capacity involved in solving production issues? What % of the time more or less?")
 emergencies = st.slider('% time spent on emergencies', 0, 100, 25)
+st.write("Devs will leave your team, when it happens it is very disruptive. What was the turnover over the last 12 months?")
 turnover = st.slider('turnover per year (% quitting per year)', 0, 100, 33)
+st.write("What gap (in days) should the simulation use for the time between a leaving dev's last day and the new one starting?")
 replacement = st.slider('time (days) till new hire starts', 0, 300, 60)
+st.write("How long till an experienced dev on your team picks up their first independent ticket?")
 onboarding = st.slider('time (days) it takes new hire to become productive', 0, 300, 15)
+st.write("For sake of simplicity devs's chance of taking holidays increases with every day, but the total will never exceed the specified max PTOs")
 holidays = st.slider('number of holidays in a year (PTO)', 0, 40, 25)
+st.write("People get sick, devs too. Use % chance (per working day) of a dev calling in sick.")
 sickness = st.slider('sickness %', 0, 100, 1)
+st.write("Add up recurring meetings devs are involved in (not related to the project).")
 meetings = st.slider('meetings %', 0, 100, 10)
+st.write("Specify % of time a mentor / buddy spends when onboarding a new dev")
 helps_onbording = st.slider('% Time spent helping onboarded devs (when there are new devs)', 0, 100, 10)
+st.write("How time consuming is your recruiting process for your own devs? This will kick in only when recruiting.")
 helps_recruiting = st.slider('% Time spent participating in interviews (when looking for new devs)', 0, 100, 5)
 
 # st.subheader('Multitasking - how many different projects run at the same time')
@@ -157,6 +195,13 @@ while (worked_days < total_mandays_estimate) or not well_defined:
             dev.not_filled = True
     lead_days += 1
 late_by = round(lead_days - leadtime_estimate, 1)
+st.markdown("""
+# Results
+- Lead time means: how many working days from the start till finish the project took.
+In real life situation this would be calendar days, but this work obsessed simulation does not know weekends..
+- Waste is any activity that did not progress the project (recruiting, onboarding, emergencies, PTO, sickness)
+- Scope Change waste: component of the overall waste corresponding to the uncertainty / spec change
+""")
 col1, col2, col3 = st.columns(3)
 col1.metric(label="Lead time", value=f"{lead_days} days", delta=f"{late_by} days", delta_color="inverse")
 waste = (lead_days * devs) -(leadtime_estimate * devs)
@@ -164,4 +209,5 @@ col2.metric(label="Waste", value=f"{waste} days")
 col3.metric(label="Scope Change Waste", value=f"{scope_change_waste} days")
 report = [d.report() for d in _devs]
 report = pd.DataFrame(report)
+st.header("Individual Time Breakdown per Contributor")
 st.dataframe(report)
