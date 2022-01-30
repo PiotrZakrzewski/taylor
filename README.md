@@ -1,0 +1,14 @@
+# Make Taylor Proud of your Team's Estimates
+I bet your estimates suck and most of your projects are delayed. Maybe you even gave up on estimating dev-team work since it is futile. Or at least hide time estimates behind story-points. Taylor won't fix it for you entirely, but will accompany you as a dev-team estimate calculator whenever people in suits ask the inevitable question.
+[Here is The Calculator Itself](https://share.streamlit.io/piotrzakrzewski/taylor/main/taylor.py)
+
+## Dev Estimate Calculator - Goals
+- Think of it as a fancy checklist, it will make sure you are aware of some common sources of delays before you Give The Number
+- It will help you get more disciplined in giving the estimates
+- Conversation starter about sources of delays (dependency on other teams, fire-fighting, multitasking, turnover ...)
+
+## Contributions Welcome
+I encourage you to ask questions / make suggestions via GitHub issues in this project, or via [my twitter](https://twitter.com/pmzakrzewski)
+
+## Why Taylor and not "Dev Team Estimate Calculator"?
+Because of one inspiring historical [Taylor](https://en.wikipedia.org/wiki/Frederick_Winslow_Taylor) of course.
