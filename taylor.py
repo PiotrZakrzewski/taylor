@@ -224,11 +224,14 @@ In real life situation this would be calendar days, but this work obsessed simul
 - Waste is any activity that did not progress the project (recruiting, onboarding, emergencies, PTO, sickness)
 - Scope Change waste: component of the overall waste corresponding to the uncertainty / spec change
 """)
-col1, col2, col3 = st.columns(3)
+col1, col2  = st.columns(2)
+col3, col4 = st.columns(2)
 col1.metric(label="Lead time", value=f"{lead_days} days", delta=f"{late_by} days", delta_color="inverse")
 waste = (lead_days * devs) -(leadtime_estimate * devs)
-col2.metric(label="Waste", value=f"{waste} days")
+col2.metric(label="Waste (multitasking/unavailable)", value=f"{waste} days")
 col3.metric(label="Scope Change Waste", value=f"{scope_change_waste} days")
+total_wait = sum([d.days_waiting for d in _devs])
+col4.metric(label="Waiting", value=f"{total_wait} days")
 report = [d.report() for d in _devs]
 report = pd.DataFrame(report)
 st.header("Individual Time Breakdown per Contributor")
