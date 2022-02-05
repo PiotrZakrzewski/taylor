@@ -8,9 +8,9 @@ I bet your estimates suck and most of your projects are delayed. Maybe you even 
 - Conversation starter about sources of delays (dependency on other teams, fire-fighting, multitasking, turnover ...)
 
 ## TODO
-- One of the most important (but as of now still missing) sources of delays are external dependencies (external stakeholders, other team that needs to finish a task for you)
 - Task ordering within the project, lets say you have an official QA process, it can only start after you finish dev work, this cannot happen in parallel and more importantly QAs and devs are often not treated as fungible (one does not pick up the tasks of another).
 - Add uncertainty about the estimation itself (ideas: https://jacobian.org/2021/may/25/my-estimation-technique/)
+- Visualize each dev timeline using a gantt chart
 
 ## Contributions Welcome
 I encourage you to ask questions / make suggestions via GitHub issues in this project, or via [my twitter](https://twitter.com/pmzakrzewski)

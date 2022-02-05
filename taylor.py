@@ -47,9 +47,22 @@ if not well_defined:
     last_moment_change = st.checkbox("Only at the end of the project we will know if it is the right thing to build", value=True)
     if not last_moment_change:
         checkin_moment = st.slider("What % of the project must be complete before you can verify if it is the right thing to build?", 1, 99, 80)
+st.markdown("""
+**Waiting on review**
 
+If this task/project requires a team member to review before work can proceed, check the following box.
+The review can only take place when the reviewer is available, same probabilities will be used
+for determining if the reviewer is available for review as for the rest of the team (see later section "Availability")
+""")        
+review_needed = st.checkbox("Is there any sort of review involved? e.g. Pull Request review.", value=True)
+if review_needed:
+    review_frequency = st.slider("The (PR) review happens every X days (1=every day)", 1, 10, 5)
+st.markdown("Requirement of an approval or input from some external stakeholder can also be a cause for waiting. Approval is simulated the exact same way as review.")
+approval_needed = st.checkbox("Is there an external stakeholder who needs to approve anything?", value=True)
+if approval_needed:
+    approval_frequency = st.slider("Approval/input from an external stakeholder happens every X days (1=every day)", 1, 30, 10)
 st.header("Availability stats for the team")
-st.write("Spillover means that your devs are still preoccupied with lefotvers from the previous project")
+st.write("Spillover means that your devs are still preoccupied with leftovers from the previous project")
 spillover = st.slider('spillover % time spent on previous unfinished work', 0, 100, 50)
 st.write("Is your project team in any capacity involved in solving production issues? What % of the time more or less?")
 emergencies = st.slider('% time spent on emergencies', 0, 100, 25)
@@ -162,12 +175,13 @@ def is_productive(contr: Contributor, onbording_needed:bool, recruitment_in_prog
     if busy_prev_work(contr):
         contr.other_work += 1
         return False
-    contr.worked_days += 1
     return True
 
 worked_days = 0
 lead_days = 0
 _devs = [Contributor("dev") for _ in range(devs)]
+reviewer = Contributor("reviewer")
+ext_stakeholder = Contributor("external stakeholder")
 perc_complete = 0
 scope_change_waste = 0
 while (worked_days < total_mandays_estimate) or not well_defined:
@@ -178,9 +192,17 @@ while (worked_days < total_mandays_estimate) or not well_defined:
         worked_days = 0
     recruiting_in_progress = any([dev.not_filled for dev in _devs])
     onboarding_in_progress = any([not dev.onboarded for dev in _devs])
+    reviewer_available = is_productive(reviewer, onboarding_in_progress, recruiting_in_progress)
+    stakeholder_available = is_productive(ext_stakeholder, onboarding_in_progress, recruiting_in_progress)
     for dev in _devs:
         if is_productive(dev, onboarding_in_progress, recruiting_in_progress):
-            worked_days += 1
+            if review_needed and (lead_days % review_frequency) == 0 and not reviewer_available:
+                dev.days_waiting += 1
+            elif approval_needed and (lead_days % approval_frequency) == 0 and not stakeholder_available:
+                dev.days_waiting += 1
+            else:
+                dev.worked_days += 1
+                worked_days += 1
         if not dev.onboarded and dev.days_till_productive < 1:
             dev.onboarded = True
         if not dev.onboarded:
